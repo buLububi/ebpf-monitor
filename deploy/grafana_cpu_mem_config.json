@@ -1,0 +1,11 @@
+{
+  "panel_id": 1,
+  "unit": "percent",
+  "prometheus_query": "rate(container_cpu_usage_seconds_total[30s]) * 100"
+}
+
+{
+  "panel_id": 2,
+  "unit": "megabytes",
+  "prometheus_query": "container_memory_usage_bytes"
+}

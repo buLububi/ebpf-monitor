@@ -1,0 +1,62 @@
+groups:
+  - name: ebpf_container_alerts
+    rules:
+      - alert: 容器CPU负载过高
+        expr: sum by (container) (rate(container_cpu_usage_usec[1m])) > 50000
+        for: 30s
+        labels:
+          severity: 一般
+        annotations:
+          summary: 检测到容器CPU负载过高
+          display_summary: 容器 {{ $labels.container }} CPU负载过高
+          description: 该容器最近30秒CPU使用持续偏高，需要关注负载情况。
+
+      - alert: 容器平均调度等待时间过高
+        expr: sum by (container) (container_sched_latency_avg_us) > 300000
+        for: 30s
+        labels:
+          severity: 一般
+        annotations:
+          summary: 检测到容器平均调度等待时间过高
+          display_summary: 容器 {{ $labels.container }} 平均调度等待时间过高
+          description: 说明该容器线程平均等待CPU时间偏长，可能存在资源竞争。
+
+      - alert: 容器最大调度等待时间异常
+        expr: max by (container) (max_over_time(container_sched_latency_last_us[5m])) > 5000000
+        for: 15s
+        labels:
+          severity: 严重
+        annotations:
+          summary: 检测到容器最近5分钟最大调度等待时间异常
+          display_summary: 容器 {{ $labels.container }} 最近5分钟最大调度等待时间异常
+          description: 说明该容器最近5分钟内出现了明显的调度抖动或突发等待。
+
+      - alert: Web类容器线程唤醒频率异常
+        expr: sum by (container) (rate(container_sched_wakeup_total{container_role="web"}[1m])) > 100
+        for: 15s
+        labels:
+          severity: 一般
+        annotations:
+          summary: 检测到Web类容器线程唤醒频率异常
+          display_summary: Web类容器 {{ $labels.container }} 线程唤醒频率异常
+          description: 说明Web服务在单位时间内被过于频繁唤醒，可能存在异常流量或请求抖动。
+
+      - alert: 缓存数据库类容器调度压力过大
+        expr: sum by (container) (container_sched_latency_avg_us{container_role="cache_db"}) > 400000
+        for: 30s
+        labels:
+          severity: 严重
+        annotations:
+          summary: 检测到缓存/数据库类容器调度压力过大
+          display_summary: 缓存/数据库类容器 {{ $labels.container }} 调度压力过大
+          description: 说明缓存或数据库类容器平均调度等待时间持续偏高，需要检查CPU限制或高并发负载。
+
+      - alert: 监控链路中断
+        expr: up{job="ebpf_container_cpu_mem"} == 0
+        for: 15s
+        labels:
+          severity: 严重
+        annotations:
+          summary: 检测到容器监控链路中断
+          display_summary: 容器监控链路中断
+          description: Prometheus无法抓取eBPF容器监控指标，请检查exporter或监控进程。

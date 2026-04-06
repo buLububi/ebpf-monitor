@@ -1,0 +1,53 @@
+global:
+  smtp_smarthost: 'smtp.qq.com:587'
+  smtp_from: '1769250028@qq.com'
+  smtp_auth_username: '1769250028@qq.com'
+  smtp_auth_password: 'vztcabveuaxdbiff'
+  smtp_require_tls: true
+
+route:
+  receiver: 'email-alert'
+  group_by: ['container']
+  group_wait: 20s
+  group_interval: 3m
+  repeat_interval: 3h
+
+receivers:
+- name: 'email-alert'
+  email_configs:
+  - to: '1769250028@qq.com'
+    send_resolved: false
+    require_tls: true
+    headers:
+      Subject: '【容器异常告警】{{ .CommonLabels.container }} 出现告警，请及时处理'
+    html: |
+      <html>
+      <body style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;background:#f7f7f7;padding:20px;">
+        <div style="max-width:760px;margin:0 auto;background:#ffffff;border-radius:10px;padding:24px;border:1px solid #e5e5e5;">
+          <h2 style="margin-top:0;color:#d9534f;">容器监控告警通知</h2>
+          <p>系统检测到以下异常，请及时处理。</p>
+
+          <div style="background:#f0f4f8;padding:12px 16px;border-radius:8px;margin-bottom:20px;">
+            <p style="margin:0;"><b>异常容器：</b>{{ .CommonLabels.container }}</p>
+            <p style="margin:6px 0 0 0;"><b>告警数量：</b>{{ len .Alerts }}</p>
+          </div>
+
+          {{ range .Alerts }}
+          <div style="border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:16px;">
+            <p style="margin:0 0 8px 0;"><b>告警名称：</b>{{ if .Annotations.display_summary }}{{ .Annotations.display_summary }}{{ else }}{{ .Annotations.summary }}{{ end }}</p>
+            <p style="margin:0 0 8px 0;"><b>严重级别：</b>{{ .Labels.severity }}</p>
+            <p style="margin:0 0 8px 0;"><b>容器名称：</b>{{ .Labels.container }}</p>
+            <p style="margin:0 0 8px 0;"><b>告警摘要：</b>{{ .Annotations.summary }}</p>
+            <p style="margin:0 0 8px 0;"><b>详细说明：</b>{{ .Annotations.description }}</p>
+            <p style="margin:0;"><b>触发时间（北京时间）：</b>{{ .StartsAt | tz "Asia/Shanghai" | date "2006-01-02 15:04:05" }}</p>
+          </div>
+          {{ end }}
+
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+          <p style="color:#666;font-size:14px;margin-bottom:0;">
+            说明：该邮件由 eBPF 容器监控系统自动发送。当前邮件已按“按容器聚合”方式发送，减少重复告警干扰。
+          </p>
+        </div>
+      </body>
+      </html>

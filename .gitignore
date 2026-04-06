@@ -1,0 +1,21 @@
+# build
+*.o
+*.out
+*.log
+
+# bpf
+*.skel.h
+
+# binary
+cpu_mem_monitor
+cpu_mem_multi_monitor
+
+# runtime
+runtime/
+
+# editor
+.vscode/
+.idea/
+
+# temp
+*.swp

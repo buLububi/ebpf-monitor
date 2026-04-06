@@ -1,0 +1,11 @@
+{
+  "panel_id": 5,
+  "title": "🔥 当前告警数",
+  "prometheus_query": "count(ALERTS{alertstate=\"firing\"})"
+}
+
+{
+  "panel_id": 6,
+  "title": "⚠️ 异常容器数",
+  "prometheus_query": "count(count by(container)(ALERTS{alertstate=\"firing\"}))"
+}
