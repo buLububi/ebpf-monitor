@@ -1,0 +1,94 @@
+global:
+  smtp_smarthost: 'smtp.qq.com:587'
+  smtp_from: '1769250028@qq.com'
+  smtp_auth_username: '1769250028@qq.com'
+  smtp_auth_password: 'vztcabveuaxdbiff'
+  smtp_require_tls: true
+
+route:
+  receiver: 'email-alert'
+  group_by: ['container']
+  group_wait: 20s
+  group_interval: 10m
+  repeat_interval: 3h
+
+receivers:
+- name: 'email-alert'
+  email_configs:
+  - to: '1769250028@qq.com'
+    send_resolved: false
+    require_tls: true
+    headers:
+      Subject: '【容器监控告警】{{ .CommonLabels.container }} 出现异常，请及时关注'
+    html: |
+      <html>
+      <body style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;background:#f7f7f7;padding:20px;">
+        <div style="max-width:780px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;border:1px solid #e8e8e8;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          
+          <h2 style="margin-top:0;color:#d9534f;">容器监控告警通知</h2>
+          <p style="margin:0 0 16px 0;color:#333;">
+            系统检测到容器运行过程中出现异常指标。为了避免影响持续扩大，建议尽快关注相关容器状态。
+          </p>
+
+          <div style="background:#f0f4f8;padding:14px 18px;border-radius:8px;margin-bottom:20px;">
+            <p style="margin:0 0 6px 0;"><b>异常容器：</b>{{ .CommonLabels.container }}</p>
+            <p style="margin:0 0 6px 0;"><b>告警数量：</b>{{ len .Alerts }}</p>
+            <p style="margin:0;"><b>通知说明：</b>当前邮件已按容器维度进行聚合，避免同一容器短时间内重复告警造成干扰。</p>
+          </div>
+
+          {{ range .Alerts }}
+          <div style="border:1px solid #e5e5e5;border-radius:10px;padding:16px 18px;margin-bottom:16px;background:#fcfcfc;">
+            <p style="margin:0 0 10px 0;font-size:16px;color:#222;">
+              <b>告警名称：</b>
+              {{ if .Annotations.display_summary }}{{ .Annotations.display_summary }}{{ else }}{{ .Annotations.summary }}{{ end }}
+            </p>
+
+            <p style="margin:0 0 8px 0;"><b>严重级别：</b>{{ .Labels.severity }}</p>
+            <p style="margin:0 0 8px 0;"><b>容器名称：</b>{{ .Labels.container }}</p>
+
+            {{ if .Labels.container_role }}
+            <p style="margin:0 0 8px 0;"><b>容器类型：</b>{{ .Labels.container_role }}</p>
+            {{ end }}
+
+            <p style="margin:0 0 8px 0;"><b>告警摘要：</b>{{ .Annotations.summary }}</p>
+            <p style="margin:0 0 8px 0;"><b>详细说明：</b>{{ .Annotations.description }}</p>
+
+            {{ if .ValueString }}
+            <p style="margin:0 0 8px 0;"><b>当前指标值：</b>{{ .ValueString }}</p>
+            {{ end }}
+
+            <p style="margin:0 0 8px 0;"><b>触发时间（北京时间）：</b>{{ .StartsAt | tz "Asia/Shanghai" | date "2006-01-02 15:04:05" }}</p>
+
+            <div style="margin-top:12px;padding:12px 14px;background:#fff7e6;border-left:4px solid #faad14;border-radius:6px;">
+              <p style="margin:0 0 6px 0;"><b>建议关注方向：</b></p>
+
+              {{ if match ".*CPU.*" .Annotations.summary }}
+              <p style="margin:0;color:#555;">建议优先检查该容器近期负载变化、CPU限制配置以及是否存在突发压测或并发请求增大。</p>
+              {{ else if match ".*调度.*" .Annotations.summary }}
+              <p style="margin:0;color:#555;">建议结合CPU负载、线程切换情况和容器角色判断是否存在资源竞争、调度等待偏高或突发抖动。</p>
+              {{ else if match ".*IO.*" .Annotations.summary }}
+              <p style="margin:0;color:#555;">建议重点关注磁盘读写压力、IO延迟波动、文件系统状态，以及该容器近期是否存在集中落盘或高频读写行为。</p>
+              {{ else if match ".*读取.*" .Annotations.summary }}
+              <p style="margin:0;color:#555;">建议关注该容器是否存在大量文件读取、静态资源访问集中或缓存命中不足等情况。</p>
+              {{ else if match ".*写入.*" .Annotations.summary }}
+              <p style="margin:0;color:#555;">建议关注日志写入、持久化任务、缓存刷盘或数据库写入压力是否在短时间内明显增大。</p>
+              {{ else if match ".*链路中断.*" .Annotations.summary }}
+              <p style="margin:0;color:#555;">建议先检查监控进程、exporter服务和Prometheus抓取配置，确认监控链路是否正常连通。</p>
+              {{ else }}
+              <p style="margin:0;color:#555;">建议结合当前容器角色、业务负载和监控图表进一步排查，优先确认异常是否持续存在。</p>
+              {{ end }}
+            </div>
+          </div>
+          {{ end }}
+
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+
+          <div style="color:#666;font-size:14px;">
+            <p style="margin:0 0 6px 0;"><b>温馨提示：</b></p>
+            <p style="margin:0 0 4px 0;">1. 当前邮件为自动告警通知，请以 Grafana 仪表盘和 Prometheus 实时数据为准。</p>
+            <p style="margin:0 0 4px 0;">2. 如果同一容器持续异常，系统会按聚合策略周期性提醒，避免重复刷屏。</p>
+            <p style="margin:0;">3. 若异常已定位，可结合容器类型（Web / 缓存数据库）优先排查对应资源瓶颈。</p>
+          </div>
+        </div>
+      </body>
+      </html>

@@ -102,24 +102,24 @@ groups:
           description: 最近1分钟内磁盘写入增量持续偏高，可能存在数据持久化压力或写入热点。
 
       - alert: 容器IO读操作异常频繁
-        expr: rate(container_io_read_calls[30s]) > 50
+        expr: container_io_read_calls > 1000
         for: 30s
         labels:
           severity: 警告
         annotations:
           summary: 检测到容器IO读操作异常频繁
           display_summary: 容器 {{ $labels.container }} IO读操作频繁
-          description: 最近30秒内该容器读操作速率持续偏高，可能存在频繁小文件读取或缓存命中不足。
+          description: 当前时间窗口内读操作次数过多，可能存在频繁小文件读取或缓存失效。
 
       - alert: 容器IO写操作异常频繁
-        expr: rate(container_io_write_calls[30s]) > 50
+        expr: container_io_write_calls > 500
         for: 30s
         labels:
           severity: 警告
         annotations:
           summary: 检测到容器IO写操作异常频繁
           display_summary: 容器 {{ $labels.container }} IO写操作频繁
-          description: 最近30秒内该容器写操作速率持续偏高，可能存在日志刷盘频繁或写入压力集中。
+          description: 当前时间窗口内写操作次数过多，可能存在日志刷盘频繁或写入压力集中。
 
       - alert: IO监控链路中断
         expr: up{job="ebpf_container_io"} == 0

@@ -1,21 +1,18 @@
-# build
-*.o
-*.out
-*.log
-
-# bpf
-*.skel.h
-
-# binary
-cpu_mem_monitor
-cpu_mem_multi_monitor
-
-# runtime
 runtime/
-
-# editor
-.vscode/
-.idea/
-
-# temp
+*.log
+*.pid
+__pycache__/
+*.pyc
+*.pyo
+*.o
+*.a
+*.so
+*.out
+*.tmp
 *.swp
+deploy/grafana-data/
+node_exporter-*/
+prometheus-*/
+bcc/
+io_test*
+test_*
