@@ -23,7 +23,7 @@ fi
 
 echo "[INFO] target container=$CONTAINER pid=$PID"
 
-nohup "$MONITOR" \
+nohup sudo "$MONITOR" \
   --pid "$PID" \
   --container "$CONTAINER" \
   --state-file "$STATE_FILE" \
