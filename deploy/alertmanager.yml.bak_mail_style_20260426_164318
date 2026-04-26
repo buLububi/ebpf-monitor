@@ -1,0 +1,36 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['container']        # 🔥 只按容器分组
+  group_wait: 30s                # 等30秒聚合
+  group_interval: 5m             # 5分钟内不重复发
+  repeat_interval: 30m           # 30分钟才重复提醒
+
+  receiver: 'email-notifications'
+
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: '1769250028@qq.com'
+        from: '1769250028@qq.com'
+        smarthost: 'smtp.qq.com:587'
+        auth_username: '1769250028@qq.com'
+        auth_password: 'vztcabveuaxdbiff'
+        require_tls: true
+
+        headers:
+          Subject: '[容器告警] {{ .GroupLabels.container }} ({{ .Alerts | len }}条)'
+
+        html: |
+          <h2>容器告警汇总</h2>
+          <p><b>容器：</b>{{ .GroupLabels.container }}</p>
+          <p><b>告警数量：</b>{{ len .Alerts }}</p>
+          <hr/>
+          {{ range .Alerts }}
+            <p>
+            <b>告警：</b>{{ .Labels.alertname }}<br/>
+            <b>描述：</b>{{ .Annotations.description }}<br/>
+            <b>时间：</b>{{ .StartsAt }}
+            </p>
+          {{ end }}

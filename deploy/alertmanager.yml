@@ -1,115 +1,63 @@
 global:
-  smtp_smarthost: 'smtp.qq.com:587'
-  smtp_from: '1769250028@qq.com'
-  smtp_auth_username: '1769250028@qq.com'
-  smtp_auth_password: 'vztcabveuaxdbiff'
-  smtp_require_tls: true
+  resolve_timeout: 5m
 
 route:
-  receiver: 'email-alert'
-  group_by: ['container']
-  group_wait: 10s
-  group_interval: 30s
-  repeat_interval: 1h
+  group_by: ['container']        # 🔥 只按容器分组
+  group_wait: 30s                # 等30秒聚合
+  group_interval: 5m             # 5分钟内不重复发
+  repeat_interval: 30m           # 30分钟才重复提醒
+
+  receiver: 'email-notifications'
 
 receivers:
-- name: 'email-alert'
-  email_configs:
-  - to: '1769250028@qq.com'
-    send_resolved: true
-    headers:
-      Subject: '【容器监控告警】【{{ .CommonLabels.severity }}】{{ .CommonLabels.container }} - {{ .CommonLabels.alertname }}'
-    html: |
-      <html>
-      <body style="margin:0;padding:0;background:#f5f7fa;font-family:'Microsoft YaHei',Arial,sans-serif;">
-        <div style="max-width:920px;margin:24px auto;background:#ffffff;border:1px solid #ebeef5;border-radius:10px;overflow:hidden;">
-          
-          <div style="padding:20px 24px;background:linear-gradient(135deg,#1f2d3d,#324057);color:#fff;">
-            <div style="font-size:24px;font-weight:700;">容器监控告警通知</div>
-            <div style="margin-top:8px;font-size:13px;opacity:0.9;">
-              来源：eBPF Container Monitor ｜ 时区：北京时间（Asia/Shanghai）
-            </div>
-          </div>
+  - name: 'email-notifications'
+    email_configs:
+      - to: '1769250028@qq.com'
+        from: '1769250028@qq.com'
+        smarthost: 'smtp.qq.com:587'
+        auth_username: '1769250028@qq.com'
+        auth_password: 'vztcabveuaxdbiff'
+        require_tls: true
 
-          <div style="padding:20px 24px;background:#fafafa;border-bottom:1px solid #ebeef5;">
-            <table style="width:100%;border-collapse:collapse;font-size:14px;color:#303133;">
-              <tr>
-                <td style="padding:6px 0;width:120px;"><b>容器</b></td>
-                <td style="padding:6px 0;">{{ .CommonLabels.container }}</td>
-              </tr>
-              <tr>
-                <td style="padding:6px 0;"><b>角色</b></td>
-                <td style="padding:6px 0;">{{ .CommonLabels.container_role }}</td>
-              </tr>
-              <tr>
-                <td style="padding:6px 0;"><b>告警数量</b></td>
-                <td style="padding:6px 0;">{{ len .Alerts }}</td>
-              </tr>
-              <tr>
-                <td style="padding:6px 0;"><b>分组键</b></td>
-                <td style="padding:6px 0;">container + alertname</td>
-              </tr>
-            </table>
-          </div>
+        headers:
+          Subject: '[容器告警] {{ .GroupLabels.container }} ({{ .Alerts | len }}条)'
 
-          <div style="padding:20px 24px;">
-            {{ range .Alerts }}
-            <div style="margin-bottom:18px;border:1px solid #ebeef5;border-radius:8px;overflow:hidden;">
-              
-              {{ if eq .Labels.severity "严重" }}
-              <div style="padding:12px 16px;background:#fde2e2;color:#c45656;font-weight:700;">
-                严重告警
+        html: |
+          <div style="font-family:Arial,'Microsoft YaHei',sans-serif;background:#f4f6fb;padding:24px;color:#1f2937;">
+            <div style="max-width:760px;margin:0 auto;background:#ffffff;border-radius:14px;border:1px solid #e5e7eb;overflow:hidden;">
+              <div style="background:#1f2937;color:#ffffff;padding:22px 28px;">
+                <div style="font-size:22px;font-weight:bold;">容器监控告警</div>
+                <div style="font-size:13px;margin-top:8px;color:#cbd5e1;">eBPF Container Monitor</div>
               </div>
-              {{ else if eq .Labels.severity "警告" }}
-              <div style="padding:12px 16px;background:#faecd8;color:#e6a23c;font-weight:700;">
-                警告告警
-              </div>
-              {{ else }}
-              <div style="padding:12px 16px;background:#ecf5ff;color:#409eff;font-weight:700;">
-                一般告警
-              </div>
-              {{ end }}
 
-              <div style="padding:16px;background:#fff;">
-                <table style="width:100%;border-collapse:collapse;font-size:14px;color:#303133;">
-                  <tr>
-                    <td style="padding:8px 0;width:120px;"><b>告警名</b></td>
-                    <td style="padding:8px 0;">{{ .Labels.alertname }}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:8px 0;"><b>摘要</b></td>
-                    <td style="padding:8px 0;">{{ .Annotations.summary }}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:8px 0;"><b>说明</b></td>
-                    <td style="padding:8px 0;">{{ .Annotations.description }}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:8px 0;"><b>级别</b></td>
-                    <td style="padding:8px 0;">{{ .Labels.severity }}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:8px 0;"><b>开始时间</b></td>
-                    <td style="padding:8px 0;">{{ .StartsAt }}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:8px 0;"><b>Grafana</b></td>
-                    <td style="padding:8px 0;">
-                      <a href="http://127.0.0.1:3000/d/container-classified-final"
-                         style="display:inline-block;padding:8px 14px;background:#409eff;color:#fff;text-decoration:none;border-radius:6px;">
-                        查看监控面板
-                      </a>
-                    </td>
-                  </tr>
-                </table>
+              <div style="padding:24px 28px;">
+                <div style="display:flex;gap:16px;margin-bottom:20px;">
+                  <div style="flex:1;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                    <div style="font-size:13px;color:#64748b;">容器</div>
+                    <div style="font-size:20px;font-weight:bold;margin-top:6px;">{{ .GroupLabels.container }}</div>
+                  </div>
+                  <div style="flex:1;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px;">
+                    <div style="font-size:13px;color:#9a3412;">告警数量</div>
+                    <div style="font-size:20px;font-weight:bold;margin-top:6px;color:#ea580c;">{{ len .Alerts }} 条</div>
+                  </div>
+                </div>
+
+                {{ range .Alerts }}
+                <div style="border:1px solid #fecaca;border-radius:12px;margin-bottom:16px;overflow:hidden;">
+                  <div style="background:#fee2e2;color:#991b1b;padding:12px 16px;font-weight:bold;">
+                    严重告警：{{ .Labels.alertname }}
+                  </div>
+                  <div style="padding:16px;background:#ffffff;line-height:1.7;">
+                    <div><b>摘要：</b>{{ .Annotations.summary }}</div>
+                    <div><b>说明：</b>{{ .Annotations.description }}</div>
+                    <div><b>开始时间：</b>{{ .StartsAt }}</div>
+                  </div>
+                </div>
+                {{ end }}
+
+                <div style="margin-top:20px;padding:14px;background:#f8fafc;border-radius:10px;color:#64748b;font-size:13px;">
+                  请根据告警容器进入 Grafana 查看对应容器详情。
+                </div>
               </div>
             </div>
-            {{ end }}
           </div>
-
-          <div style="padding:14px 24px;background:#fafafa;color:#909399;font-size:12px;border-top:1px solid #ebeef5;">
-            本邮件由 Alertmanager 自动发送，请勿直接回复。
-          </div>
-        </div>
-      </body>
-      </html>

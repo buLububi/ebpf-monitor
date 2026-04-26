@@ -1,0 +1,958 @@
+{
+  "uid": "container-customer-overview",
+  "title": "容器性能观测总览",
+  "tags": [
+    "ebpf",
+    "container",
+    "customer",
+    "overview"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 42,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "templating": {
+    "list": [
+      {
+        "name": "role",
+        "type": "query",
+        "label": "容器类型",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "query": "label_values(container_cpu_usage_usec, container_role)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "进入容器详情页",
+      "type": "dashboards",
+      "tags": [
+        "container-detail"
+      ],
+      "includeVars": true,
+      "keepTime": true
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "当前告警数量",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "count(ALERTS{alertstate=\"firing\"}) OR vector(0)",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "正在观测的容器数量",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "count(count by (container) (container_cpu_usage_usec)) OR vector(0)",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "当前启用监测项",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "vector(10)",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "最近 1 分钟最忙 CPU 容器",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "topk(1, rate(container_cpu_usage_usec[1m]))",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "容器实时健康排行：点击容器可进入详情",
+      "description": "把 CPU 活跃度、内存占用、IO 延迟合成一个客户可理解的实时排行。点击容器名称可进入该容器详情页。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "topk(20, rate(container_cpu_usage_usec{container_role=~\"$role\"}[1m]) + container_memory_current_bytes{container_role=~\"$role\"} / 1024 / 1024 / 1024 + container_io_latency_avg_us{container_role=~\"$role\"} / 1000)",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "renameByName": {
+              "container": "容器名称",
+              "container_role": "容器类型",
+              "Value": "当前值"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-background",
+              "mode": "gradient"
+            }
+          },
+          "links": [
+            {
+              "title": "查看该容器详情",
+              "url": "/d/container-detail-by-name/container-detail?var-container=${__data.fields[\"容器名称\"]}&from=now-15m&to=now"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "各容器 CPU 实时活跃度",
+      "description": "越高表示该容器最近 CPU 使用越活跃。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_usec{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 3,
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "各容器内存实时占用",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_memory_current_bytes{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 3,
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "各容器 IO 累计读写量",
+      "description": "展示每个容器当前累计读写量，避免因为采样间隔导致实时速率无数据。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "rate(container_io_stat_rbytes{container_role=~\"$role\"}[1m]) + rate(container_io_stat_wbytes{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 3,
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "各容器 IO 平均延迟",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_io_latency_avg_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 3,
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "各容器线程切换频率",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "rate(container_sched_switch_total{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 3,
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "各容器最大调度延迟",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_sched_latency_max_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 3,
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      }
+    }
+  ]
+}
