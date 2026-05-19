@@ -1,21 +1,13 @@
 {
   "uid": "ebpf-container-customer-detail",
   "title": "容器性能详情",
-  "tags": [
-    "ebpf",
-    "container",
-    "detail"
-  ],
-  "timezone": "browser",
   "schemaVersion": 42,
-  "version": 2,
+  "version": 300,
   "refresh": "5s",
   "time": {
     "from": "now-15m",
     "to": "now"
   },
-  "editable": true,
-  "graphTooltip": 1,
   "templating": {
     "list": [
       {
@@ -27,9 +19,7 @@
           "uid": "Prometheus"
         },
         "query": "label_values(container_cpu_usage_usec, container)",
-        "refresh": 1,
-        "includeAll": false,
-        "multi": false
+        "refresh": 1
       }
     ]
   },
@@ -41,15 +31,11 @@
       "keepTime": true
     }
   ],
-  "annotations": {
-    "list": []
-  },
   "panels": [
     {
       "id": 1,
       "type": "stat",
       "title": "当前 CPU 活跃度",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -62,7 +48,7 @@
       },
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_usec{container=\"$container\"}[1m])",
+          "expr": "max(rate(container_cpu_usage_usec{container=\"$container\"}[1m])) OR vector(0)",
           "refId": "A",
           "legendFormat": "{{container}}"
         }
@@ -79,14 +65,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
               }
             ]
           },
@@ -102,18 +80,15 @@
           ],
           "fields": ""
         },
-        "orientation": "auto",
         "textMode": "auto",
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
+        "graphMode": "area"
       }
     },
     {
       "id": 2,
       "type": "stat",
       "title": "当前内存占用",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -126,7 +101,7 @@
       },
       "targets": [
         {
-          "expr": "container_memory_current_bytes{container=\"$container\"}",
+          "expr": "max(container_memory_current_bytes{container=\"$container\"}) OR vector(0)",
           "refId": "A",
           "legendFormat": "{{container}}"
         }
@@ -143,14 +118,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
               }
             ]
           },
@@ -166,18 +133,15 @@
           ],
           "fields": ""
         },
-        "orientation": "auto",
         "textMode": "auto",
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
+        "graphMode": "area"
       }
     },
     {
       "id": 3,
       "type": "stat",
       "title": "当前 IO 平均延迟",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -190,7 +154,7 @@
       },
       "targets": [
         {
-          "expr": "container_io_latency_avg_us{container=\"$container\"}",
+          "expr": "max(container_io_latency_avg_us{container=\"$container\"}) OR vector(0)",
           "refId": "A",
           "legendFormat": "{{container}}"
         }
@@ -207,14 +171,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
               }
             ]
           },
@@ -230,18 +186,15 @@
           ],
           "fields": ""
         },
-        "orientation": "auto",
         "textMode": "auto",
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
+        "graphMode": "area"
       }
     },
     {
       "id": 4,
       "type": "stat",
       "title": "当前调度最大延迟",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -254,7 +207,7 @@
       },
       "targets": [
         {
-          "expr": "container_sched_latency_max_us{container=\"$container\"}",
+          "expr": "max(container_sched_latency_max_us{container=\"$container\"}) OR vector(0)",
           "refId": "A",
           "legendFormat": "{{container}}"
         }
@@ -271,14 +224,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
               }
             ]
           },
@@ -294,18 +239,15 @@
           ],
           "fields": ""
         },
-        "orientation": "auto",
         "textMode": "auto",
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
+        "graphMode": "area"
       }
     },
     {
       "id": 10,
       "type": "timeseries",
-      "title": "CPU 使用趋势",
-      "description": "",
+      "title": "CPU 实时值与动态上限",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -319,8 +261,13 @@
       "targets": [
         {
           "expr": "rate(container_cpu_usage_usec{container=\"$container\"}[1m])",
-          "refId": "A",
-          "legendFormat": "$container"
+          "legendFormat": "当前值",
+          "refId": "A"
+        },
+        {
+          "expr": "avg_over_time(rate(container_cpu_usage_usec{container=\"$container\"}[1m])[1h:1m]) + 2 * stddev_over_time(rate(container_cpu_usage_usec{container=\"$container\"}[1m])[1h:1m])",
+          "legendFormat": "动态上限",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -331,24 +278,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -362,6 +295,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -370,8 +304,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -387,8 +320,7 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
@@ -396,7 +328,6 @@
       "id": 11,
       "type": "timeseries",
       "title": "内存占用趋势",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -410,8 +341,8 @@
       "targets": [
         {
           "expr": "container_memory_current_bytes{container=\"$container\"}",
-          "refId": "A",
-          "legendFormat": "$container"
+          "legendFormat": "内存",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -422,24 +353,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -453,6 +370,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -461,8 +379,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -478,16 +395,14 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
     {
       "id": 12,
       "type": "timeseries",
-      "title": "IO 读速率趋势",
-      "description": "",
+      "title": "IO 读写活动趋势",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -500,37 +415,38 @@
       },
       "targets": [
         {
-          "expr": "rate(container_io_stat_rbytes{container=\"$container\"}[1m])",
-          "refId": "A",
-          "legendFormat": "$container"
+          "expr": "container_io_read_bytes{container=\"$container\"}",
+          "legendFormat": "读字节窗口值",
+          "refId": "A"
+        },
+        {
+          "expr": "container_io_write_bytes{container=\"$container\"}",
+          "legendFormat": "写字节窗口值",
+          "refId": "B"
+        },
+        {
+          "expr": "container_io_read_calls{container=\"$container\"}",
+          "legendFormat": "读调用次数",
+          "refId": "C"
+        },
+        {
+          "expr": "container_io_write_calls{container=\"$container\"}",
+          "legendFormat": "写调用次数",
+          "refId": "D"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "Bps",
+          "unit": "short",
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -544,6 +460,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -552,8 +469,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -569,16 +485,15 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
-      }
+      },
+      "description": "这里展示 eBPF 捕获到的当前窗口 IO 活动，比 cgroup io.stat 更适合观察短时间压测。"
     },
     {
       "id": 13,
       "type": "timeseries",
-      "title": "IO 写速率趋势",
-      "description": "",
+      "title": "IO 平均延迟与动态上限",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -586,105 +501,19 @@
       "gridPos": {
         "x": 12,
         "y": 11,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
-        {
-          "expr": "rate(container_io_stat_wbytes{container=\"$container\"}[1m])",
-          "refId": "A",
-          "legendFormat": "$container"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "spanNulls": false,
-            "insertNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
-        }
-      }
-    },
-    {
-      "id": 14,
-      "type": "timeseries",
-      "title": "IO 平均延迟趋势",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 18,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
           "expr": "container_io_latency_avg_us{container=\"$container\"}",
-          "refId": "A",
-          "legendFormat": "$container"
+          "legendFormat": "当前值",
+          "refId": "A"
+        },
+        {
+          "expr": "avg_over_time(container_io_latency_avg_us{container=\"$container\"}[1h]) + 2 * stddev_over_time(container_io_latency_avg_us{container=\"$container\"}[1h])",
+          "legendFormat": "动态上限",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -695,24 +524,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -726,6 +541,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -734,8 +550,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -751,16 +566,94 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "调度最大延迟与动态上限",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_sched_latency_max_us{container=\"$container\"}",
+          "legendFormat": "当前值",
+          "refId": "A"
+        },
+        {
+          "expr": "avg_over_time(container_sched_latency_max_us{container=\"$container\"}[1h]) + 2 * stddev_over_time(container_sched_latency_max_us{container=\"$container\"}[1h])",
+          "legendFormat": "动态上限",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
         }
       }
     },
     {
       "id": 15,
       "type": "timeseries",
-      "title": "IO 最大延迟趋势",
-      "description": "",
+      "title": "线程切换 / 唤醒频率",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -773,191 +666,14 @@
       },
       "targets": [
         {
-          "expr": "container_io_latency_max_us{container=\"$container\"}",
-          "refId": "A",
-          "legendFormat": "$container"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "µs",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "spanNulls": false,
-            "insertNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
-        }
-      }
-    },
-    {
-      "id": 16,
-      "type": "timeseries",
-      "title": "线程切换频率",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 25,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
-        {
           "expr": "rate(container_sched_switch_total{container=\"$container\"}[1m])",
-          "refId": "A",
-          "legendFormat": "$container"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "spanNulls": false,
-            "insertNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "mappings": []
+          "legendFormat": "线程切换",
+          "refId": "A"
         },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
-        }
-      }
-    },
-    {
-      "id": 17,
-      "type": "timeseries",
-      "title": "线程唤醒频率",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 25,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
         {
           "expr": "rate(container_sched_wakeup_total{container=\"$container\"}[1m])",
-          "refId": "A",
-          "legendFormat": "$container"
+          "legendFormat": "线程唤醒",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -968,24 +684,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -999,6 +701,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1007,8 +710,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -1024,190 +726,7 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
-        }
-      }
-    },
-    {
-      "id": 18,
-      "type": "timeseries",
-      "title": "平均调度延迟",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 32,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
-        {
-          "expr": "container_sched_latency_avg_us{container=\"$container\"}",
-          "refId": "A",
-          "legendFormat": "$container"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "µs",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "spanNulls": false,
-            "insertNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
-        }
-      }
-    },
-    {
-      "id": 19,
-      "type": "timeseries",
-      "title": "最大调度延迟",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 32,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
-        {
-          "expr": "container_sched_latency_max_us{container=\"$container\"}",
-          "refId": "A",
-          "legendFormat": "$container"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "µs",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "spanNulls": false,
-            "insertNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     }

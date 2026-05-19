@@ -23,41 +23,53 @@ receivers:
           Subject: '[容器告警] {{ .GroupLabels.container }} ({{ .Alerts | len }}条)'
 
         html: |
-          <div style="font-family:Arial,'Microsoft YaHei',sans-serif;background:#f4f6fb;padding:24px;color:#1f2937;">
-            <div style="max-width:760px;margin:0 auto;background:#ffffff;border-radius:14px;border:1px solid #e5e7eb;overflow:hidden;">
-              <div style="background:#1f2937;color:#ffffff;padding:22px 28px;">
-                <div style="font-size:22px;font-weight:bold;">容器监控告警</div>
-                <div style="font-size:13px;margin-top:8px;color:#cbd5e1;">eBPF Container Monitor</div>
+          <div style="font-family:Arial,'Microsoft YaHei',sans-serif;background:#f5f7fb;padding:24px;color:#1f2937;">
+            <div style="max-width:760px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 16px rgba(15,23,42,0.08);">
+              
+              <div style="background:linear-gradient(135deg,#1f2937,#334155);padding:22px 28px;color:#ffffff;">
+                <div style="font-size:22px;font-weight:700;">容器监控告警</div>
+                <div style="font-size:13px;margin-top:8px;color:#cbd5e1;">
+                  eBPF Container Monitor · {{ .Status | toUpper }}
+                </div>
               </div>
 
               <div style="padding:24px 28px;">
-                <div style="display:flex;gap:16px;margin-bottom:20px;">
-                  <div style="flex:1;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+                  <div style="flex:1;min-width:180px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
                     <div style="font-size:13px;color:#64748b;">容器</div>
-                    <div style="font-size:20px;font-weight:bold;margin-top:6px;">{{ .GroupLabels.container }}</div>
+                    <div style="font-size:20px;font-weight:700;margin-top:6px;">{{ .GroupLabels.container }}</div>
                   </div>
-                  <div style="flex:1;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px;">
+                  <div style="flex:1;min-width:180px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px;">
                     <div style="font-size:13px;color:#9a3412;">告警数量</div>
-                    <div style="font-size:20px;font-weight:bold;margin-top:6px;color:#ea580c;">{{ len .Alerts }} 条</div>
+                    <div style="font-size:20px;font-weight:700;margin-top:6px;color:#ea580c;">{{ len .Alerts }} 条</div>
                   </div>
                 </div>
 
                 {{ range .Alerts }}
-                <div style="border:1px solid #fecaca;border-radius:12px;margin-bottom:16px;overflow:hidden;">
-                  <div style="background:#fee2e2;color:#991b1b;padding:12px 16px;font-weight:bold;">
-                    严重告警：{{ .Labels.alertname }}
+                <div style="border:1px solid #fecaca;background:#fff1f2;border-radius:12px;margin-bottom:16px;overflow:hidden;">
+                  <div style="background:#fee2e2;color:#991b1b;padding:12px 16px;font-weight:700;">
+                    严重告警 · {{ .Labels.alertname }}
                   </div>
-                  <div style="padding:16px;background:#ffffff;line-height:1.7;">
-                    <div><b>摘要：</b>{{ .Annotations.summary }}</div>
-                    <div><b>说明：</b>{{ .Annotations.description }}</div>
-                    <div><b>开始时间：</b>{{ .StartsAt }}</div>
+                  <div style="padding:16px;background:#ffffff;">
+                    <p style="margin:0 0 10px 0;"><b>摘要：</b>{{ .Annotations.summary }}</p>
+                    <p style="margin:0 0 10px 0;"><b>说明：</b>{{ .Annotations.description }}</p>
+                    <p style="margin:0 0 10px 0;"><b>开始时间：</b>{{ .StartsAt }}</p>
+                    <p style="margin:0;color:#64748b;font-size:13px;">
+                      分组：{{ .Labels.container }} / {{ .Labels.alertname }}
+                    </p>
                   </div>
                 </div>
                 {{ end }}
 
-                <div style="margin-top:20px;padding:14px;background:#f8fafc;border-radius:10px;color:#64748b;font-size:13px;">
-                  请根据告警容器进入 Grafana 查看对应容器详情。
+                <div style="margin-top:22px;text-align:center;">
+                  <a href="{{ .ExternalURL }}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:8px;font-weight:700;">
+                    查看 Alertmanager
+                  </a>
                 </div>
+              </div>
+
+              <div style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:14px 28px;font-size:12px;color:#64748b;">
+                本邮件由 eBPF 容器性能观测系统自动发送，请根据告警容器进入 Grafana 查看详情。
               </div>
             </div>
           </div>

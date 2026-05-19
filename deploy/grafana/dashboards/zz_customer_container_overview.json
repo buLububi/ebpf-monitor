@@ -1,21 +1,13 @@
 {
   "uid": "ebpf-container-customer-overview",
   "title": "容器性能总览",
-  "tags": [
-    "ebpf",
-    "container",
-    "overview"
-  ],
-  "timezone": "browser",
   "schemaVersion": 42,
-  "version": 2,
+  "version": 300,
   "refresh": "5s",
   "time": {
     "from": "now-15m",
     "to": "now"
   },
-  "editable": true,
-  "graphTooltip": 1,
   "templating": {
     "list": [
       {
@@ -29,12 +21,7 @@
         "query": "label_values(container_cpu_usage_usec, container_role)",
         "refresh": 1,
         "includeAll": true,
-        "multi": true,
-        "current": {
-          "selected": true,
-          "text": "All",
-          "value": "$__all"
-        }
+        "multi": true
       }
     ]
   },
@@ -46,21 +33,70 @@
       "keepTime": true
     }
   ],
-  "annotations": {
-    "list": []
-  },
   "panels": [
     {
       "id": 1,
       "type": "stat",
-      "title": "当前告警数量",
-      "description": "",
+      "title": "正在观测的容器数量",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "count(count by (container) (container_cpu_usage_usec{container_role=~\"$role\"})) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "当前告警数量",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 6,
         "y": 0,
         "w": 6,
         "h": 4
@@ -86,12 +122,8 @@
                 "value": 0
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 90
+                "value": 1
               }
             ]
           },
@@ -107,82 +139,15 @@
           ],
           "fields": ""
         },
-        "orientation": "auto",
         "textMode": "auto",
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
-      }
-    },
-    {
-      "id": 2,
-      "type": "stat",
-      "title": "正在观测的容器数量",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 6,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "targets": [
-        {
-          "expr": "count(count by (container) (container_cpu_usage_usec)) OR vector(0)",
-          "refId": "A",
-          "legendFormat": "{{container}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
+        "graphMode": "area"
       }
     },
     {
       "id": 3,
       "type": "stat",
-      "title": "当前启用监测项",
-      "description": "",
+      "title": "告警容器数量",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -195,7 +160,7 @@
       },
       "targets": [
         {
-          "expr": "vector(10)",
+          "expr": "count(count by (container) (ALERTS{alertstate=\"firing\",container=~\".+\"})) OR vector(0)",
           "refId": "A",
           "legendFormat": "{{container}}"
         }
@@ -214,12 +179,8 @@
                 "value": 0
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 90
+                "value": 1
               }
             ]
           },
@@ -235,18 +196,15 @@
           ],
           "fields": ""
         },
-        "orientation": "auto",
         "textMode": "auto",
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
+        "graphMode": "area"
       }
     },
     {
       "id": 4,
       "type": "stat",
-      "title": "CPU 最活跃容器",
-      "description": "",
+      "title": "健康容器数量",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -259,14 +217,14 @@
       },
       "targets": [
         {
-          "expr": "topk(1, rate(container_cpu_usage_usec[1m]))",
+          "expr": "(count(count by (container) (container_cpu_usage_usec{container_role=~\"$role\"})) OR vector(0)) - (count(count by (container) (ALERTS{alertstate=\"firing\",container=~\".+\"})) OR vector(0))",
           "refId": "A",
           "legendFormat": "{{container}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "color": {
             "mode": "thresholds"
           },
@@ -276,14 +234,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
               }
             ]
           },
@@ -299,287 +249,28 @@
           ],
           "fields": ""
         },
-        "orientation": "auto",
         "textMode": "auto",
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
-      }
-    },
-    {
-      "id": 5,
-      "type": "stat",
-      "title": "IO 延迟最高容器",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 4,
-        "w": 6,
-        "h": 4
-      },
-      "targets": [
-        {
-          "expr": "topk(1, container_io_latency_avg_us{container_role=~\"$role\"})",
-          "refId": "A",
-          "legendFormat": "{{container}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "µs",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
-      }
-    },
-    {
-      "id": 6,
-      "type": "stat",
-      "title": "调度延迟最高容器",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 6,
-        "y": 4,
-        "w": 6,
-        "h": 4
-      },
-      "targets": [
-        {
-          "expr": "topk(1, container_sched_latency_max_us{container_role=~\"$role\"})",
-          "refId": "A",
-          "legendFormat": "{{container}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "µs",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
-      }
-    },
-    {
-      "id": 7,
-      "type": "stat",
-      "title": "IO 读速率最高容器",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 4,
-        "w": 6,
-        "h": 4
-      },
-      "targets": [
-        {
-          "expr": "topk(1, rate(container_io_stat_rbytes{container_role=~\"$role\"}[1m]))",
-          "refId": "A",
-          "legendFormat": "{{container}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
-      }
-    },
-    {
-      "id": 8,
-      "type": "stat",
-      "title": "IO 写速率最高容器",
-      "description": "",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "gridPos": {
-        "x": 18,
-        "y": 4,
-        "w": 6,
-        "h": 4
-      },
-      "targets": [
-        {
-          "expr": "topk(1, rate(container_io_stat_wbytes{container_role=~\"$role\"}[1m]))",
-          "refId": "A",
-          "legendFormat": "{{container}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto"
+        "graphMode": "area"
       }
     },
     {
       "id": 10,
       "type": "table",
-      "title": "容器实时列表：点击容器进入详情",
-      "description": "用于快速定位当前最活跃的容器。点击容器名称可进入单容器详情。",
+      "title": "容器健康状态表",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 8,
+        "y": 4,
         "w": 24,
-        "h": 9
+        "h": 8
       },
       "targets": [
         {
-          "expr": "topk(20, rate(container_cpu_usage_usec{container_role=~\"$role\"}[1m]))",
+          "expr": "((max by (container, container_role) (container_cpu_usage_usec{container_role=~\"$role\"} * 0)) + on(container) group_left() (max by (container) (ALERTS{alertstate=\"firing\",container=~\".+\"} * 1))) or (max by (container, container_role) (container_cpu_usage_usec{container_role=~\"$role\"} * 0))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -590,14 +281,221 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true,
               "__name__": true,
               "job": true,
-              "instance": true
+              "instance": true,
+              "host_pid": true,
+              "mnt_ns": true,
+              "net_ns": true,
+              "pid_ns": true,
+              "cgroup_path": true
             },
             "renameByName": {
               "container": "容器名称",
               "container_role": "容器类型",
+              "alertname": "告警名称",
+              "alertstate": "状态",
+              "severity": "级别",
+              "Value": "健康状态"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "健康状态"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "正常",
+                        "color": "green"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "告警",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "description": "绿色表示健康，红色表示异常。点击容器可进入详情页。"
+    },
+    {
+      "id": 1101,
+      "type": "stat",
+      "title": "当前告警状态",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "count(ALERTS{alertstate=\"firing\"}) OR vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "当前无告警",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "告警明细列表",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "ALERTS{alertstate=\"firing\",container=~\".+\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "host_pid": true,
+              "mnt_ns": true,
+              "net_ns": true,
+              "pid_ns": true,
+              "cgroup_path": true
+            },
+            "renameByName": {
+              "container": "容器名称",
+              "container_role": "容器类型",
+              "alertname": "告警名称",
+              "alertstate": "状态",
+              "severity": "级别",
               "Value": "当前值"
             }
           }
@@ -608,16 +506,9 @@
           "custom": {
             "align": "auto",
             "cellOptions": {
-              "type": "color-background",
-              "mode": "gradient"
+              "type": "auto"
             }
           },
-          "links": [
-            {
-              "title": "查看该容器详情",
-              "url": "/d/ebpf-container-customer-detail/ebpf-container-detail?var-container=${__data.fields[\"容器名称\"]}&from=now-15m&to=now"
-            }
-          ],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -625,14 +516,236 @@
               {
                 "color": "green",
                 "value": 0
-              },
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "noDataMessage": "当前无告警"
+      },
+      "description": "当存在告警时展示；否则显示当前无告警"
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "CPU 最活跃容器排行",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "topk(5, rate(container_cpu_usage_usec{container_role=~\"$role\"}[1m]))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "host_pid": true,
+              "mnt_ns": true,
+              "net_ns": true,
+              "pid_ns": true,
+              "cgroup_path": true
+            },
+            "renameByName": {
+              "container": "容器名称",
+              "container_role": "容器类型",
+              "alertname": "告警名称",
+              "alertstate": "状态",
+              "severity": "级别",
+              "Value": "CPU活跃度"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
               {
-                "color": "orange",
-                "value": 5000
-              },
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "IO 平均延迟排行",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "topk(5, container_io_latency_avg_us{container_role=~\"$role\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "host_pid": true,
+              "mnt_ns": true,
+              "net_ns": true,
+              "pid_ns": true,
+              "cgroup_path": true
+            },
+            "renameByName": {
+              "container": "容器名称",
+              "container_role": "容器类型",
+              "alertname": "告警名称",
+              "alertstate": "状态",
+              "severity": "级别",
+              "Value": "IO平均延迟"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
               {
-                "color": "red",
-                "value": 20000
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "调度最大延迟排行",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "topk(5, container_sched_latency_max_us{container_role=~\"$role\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "host_pid": true,
+              "mnt_ns": true,
+              "net_ns": true,
+              "pid_ns": true,
+              "cgroup_path": true
+            },
+            "renameByName": {
+              "container": "容器名称",
+              "container_role": "容器类型",
+              "alertname": "告警名称",
+              "alertstate": "状态",
+              "severity": "级别",
+              "Value": "调度最大延迟"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -651,22 +764,21 @@
       "id": 20,
       "type": "timeseries",
       "title": "CPU Top 5 实时活跃度",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 40,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
           "expr": "topk(5, rate(container_cpu_usage_usec{container_role=~\"$role\"}[1m]))",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "legendFormat": "{{container}}",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -677,24 +789,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -708,6 +806,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -716,8 +815,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -733,8 +831,7 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
@@ -742,22 +839,21 @@
       "id": 21,
       "type": "timeseries",
       "title": "内存 Top 5 当前占用",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 12,
-        "y": 17,
+        "y": 40,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
           "expr": "topk(5, container_memory_current_bytes{container_role=~\"$role\"})",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "legendFormat": "{{container}}",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -768,24 +864,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -799,6 +881,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -807,8 +890,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -824,8 +906,7 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
@@ -833,22 +914,21 @@
       "id": 22,
       "type": "timeseries",
       "title": "IO 读速率趋势",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 24,
+        "y": 47,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
-          "expr": "rate(container_io_stat_rbytes{container_role=~\"$role\"}[1m])",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "expr": "irate(container_io_stat_rbytes{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}} 读速率",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -859,24 +939,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -890,6 +956,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -898,8 +965,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -915,8 +981,7 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
@@ -924,22 +989,21 @@
       "id": 23,
       "type": "timeseries",
       "title": "IO 写速率趋势",
-      "description": "",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 12,
-        "y": 24,
+        "y": 47,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
-          "expr": "rate(container_io_stat_wbytes{container_role=~\"$role\"}[1m])",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "expr": "irate(container_io_stat_wbytes{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}} 写速率",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -950,24 +1014,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -981,6 +1031,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -989,8 +1040,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -1006,31 +1056,34 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
     {
       "id": 24,
       "type": "timeseries",
-      "title": "IO 平均延迟 Top 5",
-      "description": "",
+      "title": "IO 延迟趋势",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 31,
+        "y": 54,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
-          "expr": "topk(5, container_io_latency_avg_us{container_role=~\"$role\"})",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "expr": "container_io_latency_avg_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}} 平均延迟",
+          "refId": "A"
+        },
+        {
+          "expr": "container_io_latency_max_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}} 最大延迟",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -1041,24 +1094,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -1072,6 +1111,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1080,8 +1120,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -1097,31 +1136,34 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
     {
       "id": 25,
       "type": "timeseries",
-      "title": "IO 最大延迟 Top 5",
-      "description": "",
+      "title": "调度延迟趋势",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 12,
-        "y": 31,
+        "y": 54,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
-          "expr": "topk(5, container_io_latency_max_us{container_role=~\"$role\"})",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "expr": "container_sched_latency_avg_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}} 平均调度延迟",
+          "refId": "A"
+        },
+        {
+          "expr": "container_sched_latency_max_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}} 最大调度延迟",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -1132,24 +1174,10 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
-            "insertNulls": false,
             "stacking": {
               "mode": "none",
               "group": "A"
@@ -1163,6 +1191,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1171,8 +1200,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -1188,31 +1216,333 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
     {
-      "id": 26,
+      "id": 201,
       "type": "timeseries",
-      "title": "线程切换频率 Top 5",
-      "description": "",
+      "title": "CPU 实时活跃度趋势",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 38,
+        "y": 40,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
-          "expr": "topk(5, rate(container_sched_switch_total{container_role=~\"$role\"}[1m]))",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "expr": "rate(container_cpu_usage_usec{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 202,
+      "type": "timeseries",
+      "title": "内存实时占用趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_memory_current_bytes{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 205,
+      "type": "timeseries",
+      "title": "IO 平均延迟趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 54,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_io_latency_avg_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 206,
+      "type": "timeseries",
+      "title": "IO 最大延迟趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 54,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_io_latency_max_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 207,
+      "type": "timeseries",
+      "title": "线程切换频率趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "rate(container_sched_switch_total{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}}",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -1223,22 +1553,9 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
             "insertNulls": false,
             "stacking": {
@@ -1254,6 +1571,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1262,8 +1580,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -1279,31 +1596,105 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
         }
       }
     },
     {
-      "id": 27,
+      "id": 208,
       "type": "timeseries",
-      "title": "调度延迟 Top 5",
-      "description": "",
+      "title": "线程唤醒频率趋势",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
       "gridPos": {
         "x": 12,
-        "y": 38,
+        "y": 61,
         "w": 12,
         "h": 7
       },
       "targets": [
         {
-          "expr": "topk(5, container_sched_latency_max_us{container_role=~\"$role\"})",
-          "refId": "A",
-          "legendFormat": "{{container}} ({{container_role}})"
+          "expr": "rate(container_sched_wakeup_total{container_role=~\"$role\"}[1m])",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 209,
+      "type": "timeseries",
+      "title": "调度平均延迟趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 68,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_sched_latency_avg_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -1314,22 +1705,9 @@
           },
           "custom": {
             "drawStyle": "line",
-            "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
+            "fillOpacity": 10,
             "showPoints": "never",
-            "pointSize": 3,
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "spanNulls": false,
             "insertNulls": false,
             "stacking": {
@@ -1345,6 +1723,7 @@
               "legend": false
             }
           },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1353,8 +1732,7 @@
                 "value": 0
               }
             ]
-          },
-          "mappings": []
+          }
         },
         "overrides": []
       },
@@ -1370,8 +1748,83 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc",
-          "hideZeros": false
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 210,
+      "type": "timeseries",
+      "title": "调度最大延迟趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 68,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_sched_latency_max_us{container_role=~\"$role\"}",
+          "legendFormat": "{{container}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
         }
       }
     }
