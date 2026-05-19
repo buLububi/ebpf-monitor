@@ -1,4 +1,7 @@
 runtime/
 *.log
 *.pid
+__pycache__/
+*.pyc
+*.bak*
 deploy/grafana/dashboards_backup/

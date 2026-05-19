@@ -4,6 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+rm -f module02_io/io_multi.bpf.o \
+      module02_io/io_multi.skel.h \
+      module02_io/io_multi_monitor
+
 clang -O2 -g -target bpf -D__TARGET_ARCH_x86 -I./common -c module02_io/io_multi.bpf.c -o module02_io/io_multi.bpf.o
 
 bpftool gen skeleton module02_io/io_multi.bpf.o > module02_io/io_multi.skel.h

@@ -1,0 +1,232 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "网络采集状态",
+      "description": "1 表示 exporter 已经读取到网络 state 文件；0 表示网络 monitor 没有正常写出数据。",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "ebpf_net_exporter_up",
+          "legendFormat": "up"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "未采集" }, "1": { "text": "正常" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "当前发送速率",
+      "description": "容器发出的网络数据量，来自 net_dev_queue。",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate(container_net_dev_queue_bytes_total[1m]))",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Bps", "decimals": 1 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "当前接收速率",
+      "description": "容器收到的网络数据量，来自 netif_receive_skb。",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate(container_netif_receive_skb_bytes_total[1m]))",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Bps", "decimals": 1 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "TCP 活动",
+      "description": "连接建立和关闭的速度，用来看连接是否突然增多。",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate(container_net_tcp_established_total[1m]) + rate(container_net_tcp_close_total[1m]))",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "decimals": 2 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "发送流量趋势",
+      "description": "越高表示容器对外发送的数据越多。",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(container_net_dev_queue_bytes_total[1m])",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Bps", "decimals": 1 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "接收流量趋势",
+      "description": "越高表示容器收到的数据越多。",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(container_netif_receive_skb_bytes_total[1m])",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Bps", "decimals": 1 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "发送包数量",
+      "description": "容器发包数量，来自 net_dev_queue 挂载点。",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "rate(container_net_dev_queue_total[1m])",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "pps", "decimals": 2 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "接收包数量",
+      "description": "容器收包数量，来自 netif_receive_skb 挂载点。",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "rate(container_netif_receive_skb_total[1m])",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "pps", "decimals": 2 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "TCP 连接建立",
+      "description": "TCP 进入 ESTABLISHED 状态的速度，能反映新连接增长。",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "rate(container_net_tcp_established_total[1m])",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "decimals": 2 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "TCP 关闭",
+      "description": "tcp_close 调用速度，突然升高可能表示短连接或异常断开增多。",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 20 },
+      "targets": [
+        {
+          "expr": "rate(container_net_tcp_close_total[1m])",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "decimals": 2 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "TCP 状态变化",
+      "description": "inet_sock_set_state 触发次数，反映 TCP 状态切换活跃度。",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 20 },
+      "targets": [
+        {
+          "expr": "rate(container_net_inet_sock_set_state_total[1m])",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "decimals": 2 },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "五个挂载点采集计数",
+      "description": "用于确认五个 eBPF 挂载点是否都有事件进入。",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "targets": [
+        {
+          "expr": "container_net_dev_queue_total",
+          "legendFormat": "{{container}} net_dev_queue"
+        },
+        {
+          "expr": "container_netif_receive_skb_total",
+          "legendFormat": "{{container}} netif_receive_skb"
+        },
+        {
+          "expr": "container_net_inet_sock_set_state_total",
+          "legendFormat": "{{container}} inet_sock_set_state"
+        },
+        {
+          "expr": "container_net_tcp_v4_connect_total",
+          "legendFormat": "{{container}} tcp_v4_connect"
+        },
+        {
+          "expr": "container_net_tcp_close_total",
+          "legendFormat": "{{container}} tcp_close"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["ebpf", "container", "network", "attach-points"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "browser",
+  "title": "容器网络监控（eBPF）",
+  "version": 2
+}

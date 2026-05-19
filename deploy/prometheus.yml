@@ -19,4 +19,8 @@ scrape_configs:
   - job_name: 'ebpf_container_io'
     static_configs:
       - targets: ['host.docker.internal:2114']
+
+  - job_name: 'ebpf_container_net'
+    static_configs:
+      - targets: ['host.docker.internal:2115']
  

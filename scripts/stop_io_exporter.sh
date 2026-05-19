@@ -13,5 +13,7 @@ if [ -f runtime/pids/io_exporter.pid ]; then
 fi
 
 pkill -f io_exporter.py 2>/dev/null || true
+sudo -v
+sudo -n pkill -f io_exporter.py 2>/dev/null || true
 
 echo "[OK] io exporter stopped"

@@ -2,7 +2,7 @@
   "uid": "ebpf-container-customer-overview",
   "title": "容器性能总览",
   "schemaVersion": 42,
-  "version": 300,
+  "version": 301,
   "refresh": "5s",
   "time": {
     "from": "now-15m",
@@ -1827,6 +1827,520 @@
           "sort": "desc"
         }
       }
+    },
+    {
+      "id": 300,
+      "type": "stat",
+      "title": "网络采集状态",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 75,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "max(ebpf_net_exporter_up) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "网络模块"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "1 表示网络 exporter 已经读取到容器网络 state 文件；0 表示网络模块未正常采集。"
+    },
+    {
+      "id": 301,
+      "type": "stat",
+      "title": "总发送速率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 75,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_net_dev_queue_bytes_total{container_role=~\"$role\"}[1m])) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "所有被选容器当前每秒发送的数据量。"
+    },
+    {
+      "id": 302,
+      "type": "stat",
+      "title": "总接收速率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 75,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_netif_receive_skb_bytes_total{container_role=~\"$role\"}[1m])) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "所有被选容器当前每秒接收的数据量。"
+    },
+    {
+      "id": 303,
+      "type": "stat",
+      "title": "TCP 连接活动",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 75,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_net_tcp_established_total{container_role=~\"$role\"}[1m]) + rate(container_net_tcp_close_total{container_role=~\"$role\"}[1m])) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "TCP 建立和关闭的综合活跃度，突然升高通常表示短连接或访问量变多。"
+    },
+    {
+      "id": 304,
+      "type": "table",
+      "title": "网络发送速率排行",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 79,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "topk(5, sum by (container, container_role) (rate(container_net_dev_queue_bytes_total{container_role=~\"$role\"}[1m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "host_pid": true,
+              "mnt_ns": true,
+              "net_ns": true,
+              "pid_ns": true,
+              "cgroup_path": true
+            },
+            "renameByName": {
+              "container": "容器名称",
+              "container_role": "容器类型",
+              "Value": "发送速率 B/s"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "看哪个容器正在对外发送最多数据。"
+    },
+    {
+      "id": 305,
+      "type": "table",
+      "title": "网络接收速率排行",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 79,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "topk(5, sum by (container, container_role) (rate(container_netif_receive_skb_bytes_total{container_role=~\"$role\"}[1m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "host_pid": true,
+              "mnt_ns": true,
+              "net_ns": true,
+              "pid_ns": true,
+              "cgroup_path": true
+            },
+            "renameByName": {
+              "container": "容器名称",
+              "container_role": "容器类型",
+              "Value": "接收速率 B/s"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "看哪个容器正在接收最多数据。"
+    },
+    {
+      "id": 306,
+      "type": "timeseries",
+      "title": "网络发送 / 接收趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 86,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate(container_net_dev_queue_bytes_total{container_role=~\"$role\"}[1m]))",
+          "legendFormat": "{{container}} 发送",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (container) (rate(container_netif_receive_skb_bytes_total{container_role=~\"$role\"}[1m]))",
+          "legendFormat": "{{container}} 接收",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "用于快速观察容器网络流量是否突然升高或归零。"
+    },
+    {
+      "id": 307,
+      "type": "timeseries",
+      "title": "TCP 连接趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 86,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate(container_net_tcp_established_total{container_role=~\"$role\"}[1m]))",
+          "legendFormat": "{{container}} 建立",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (container) (rate(container_net_tcp_close_total{container_role=~\"$role\"}[1m]))",
+          "legendFormat": "{{container}} 关闭",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "用于观察新连接和关闭连接的变化，短连接暴增时这里会很明显。"
     }
   ]
 }

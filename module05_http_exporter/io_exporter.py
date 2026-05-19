@@ -6,7 +6,7 @@ import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
-STATE_DIR = os.path.expanduser("~/experience/ebpf_container_monitor/runtime/io_multi")
+STATE_DIR = "/home/ryx/experience/ebpf_container_monitor/runtime/io_multi"
 LISTEN_HOST = "0.0.0.0"
 LISTEN_PORT = 2114
 

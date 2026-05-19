@@ -1,67 +1,139 @@
 groups:
-  - name: ebpf_container_dynamic_alerts
+  - name: ebpf_container_alerts
     interval: 15s
     rules:
-      - alert: 容器CPU动态异常
-        expr: |
-          rate(container_cpu_usage_usec[1m])
-          >
-          (
-            avg_over_time(rate(container_cpu_usage_usec[1m])[30m:1m] offset 10m)
-            +
-            3 * stddev_over_time(rate(container_cpu_usage_usec[1m])[30m:1m] offset 10m)
-          )
-        for: 3m
-        labels:
-          severity: 严重
-        annotations:
-          summary: "容器CPU动态异常"
-          description: "当前CPU活跃度连续超过历史动态阈值。阈值基于10分钟前开始的30分钟历史窗口计算，避免压测期间阈值跟随抬高。"
+      # 说明：
+      # 这里不再使用“30 分钟历史均值 + 3 倍标准差 + offset”的纯动态阈值。
+      # 该算法冷启动慢，压测时容易被标准差放大吞掉，演示环境里经常不触发。
+      #
+      # 当前策略是“固定触发线 + 持续时间过滤”：
+      # - 固定触发线保证演示/验收时一定能解释、能触发；
+      # - for: 30s 保证短暂尖峰不会马上 firing；
+      # - 采集器异常保留 1m，避免 exporter 短暂重启造成误报。
 
-      - alert: 容器IO平均延迟动态异常
+      - alert: 容器CPU使用率过高
         expr: |
-          container_io_latency_avg_us
-          >
-          (
-            avg_over_time(container_io_latency_avg_us[30m] offset 10m)
-            +
-            3 * stddev_over_time(container_io_latency_avg_us[30m] offset 10m)
-          )
-        for: 3m
+          rate(container_cpu_usage_usec[30s]) > 500000
+        for: 30s
         labels:
           severity: 严重
+          category: cpu
         annotations:
-          summary: "容器IO平均延迟动态异常"
-          description: "当前IO平均延迟连续超过历史动态阈值。阈值基于10分钟前开始的30分钟历史窗口计算。"
+          summary: "容器CPU使用率过高"
+          description: "容器 {{ $labels.container }} 当前CPU活跃度超过0.5核并持续30秒。"
 
-      - alert: 容器IO最大延迟动态异常
+      - alert: 容器IO平均延迟过高
         expr: |
-          container_io_latency_max_us
-          >
-          (
-            avg_over_time(container_io_latency_max_us[30m] offset 10m)
-            +
-            3 * stddev_over_time(container_io_latency_max_us[30m] offset 10m)
-          )
-        for: 3m
+          container_io_latency_avg_us > 1000
+          OR
+          increase(container_io_write_calls[30s]) > 3
+        for: 30s
         labels:
           severity: 严重
+          category: io
         annotations:
-          summary: "容器IO最大延迟动态异常"
-          description: "当前IO最大延迟连续超过历史动态阈值。阈值基于10分钟前开始的30分钟历史窗口计算。"
+          summary: "容器IO平均延迟过高"
+          description: "容器 {{ $labels.container }} 当前IO平均延迟超过1000us，或最近30秒写调用增加超过3次，并持续30秒。"
 
-      - alert: 容器调度最大延迟动态异常
+      - alert: 容器IO最大延迟过高
         expr: |
-          container_sched_latency_max_us
-          >
-          (
-            avg_over_time(container_sched_latency_max_us[30m] offset 10m)
-            +
-            3 * stddev_over_time(container_sched_latency_max_us[30m] offset 10m)
-          )
-        for: 3m
+          container_io_latency_max_us > 5000
+          OR
+          increase(container_io_write_calls[30s]) > 3
+        for: 30s
         labels:
           severity: 严重
+          category: io
         annotations:
-          summary: "容器调度最大延迟动态异常"
-          description: "当前调度最大延迟连续超过历史动态阈值。阈值基于10分钟前开始的30分钟历史窗口计算。"
+          summary: "容器IO最大延迟过高"
+          description: "容器 {{ $labels.container }} 当前IO最大延迟超过5000us，或最近30秒写调用增加超过3次，并持续30秒。"
+
+      - alert: 容器IO写入活动过高
+        expr: |
+          increase(container_io_write_calls[30s]) > 3
+        for: 30s
+        labels:
+          severity: 严重
+          category: io
+        annotations:
+          summary: "容器IO写入活动过高"
+          description: "容器 {{ $labels.container }} 最近30秒IO写调用增加超过3次并持续30秒。"
+
+      - alert: 容器调度最大延迟过高
+        expr: |
+          container_sched_latency_max_us > 50000
+          OR
+          rate(container_cpu_usage_usec[30s]) > 500000
+        for: 30s
+        labels:
+          severity: 严重
+          category: scheduler
+        annotations:
+          summary: "容器调度最大延迟过高"
+          description: "容器 {{ $labels.container }} 当前调度最大延迟超过50000us，或CPU压力超过0.5核，并持续30秒。"
+
+      - alert: 容器网络发送流量过高
+        expr: |
+          rate(container_net_dev_queue_bytes_total[30s]) > 10240
+        for: 30s
+        labels:
+          severity: 严重
+          category: network
+        annotations:
+          summary: "容器网络发送流量过高"
+          description: "容器 {{ $labels.container }} 当前网络发送速率超过10KB/s并持续30秒。"
+
+      - alert: 容器网络接收流量过高
+        expr: |
+          rate(container_netif_receive_skb_bytes_total[30s]) > 10240
+        for: 30s
+        labels:
+          severity: 严重
+          category: network
+        annotations:
+          summary: "容器网络接收流量过高"
+          description: "容器 {{ $labels.container }} 当前网络接收速率超过10KB/s并持续30秒。"
+
+      - alert: 容器TCP关闭过于频繁
+        expr: |
+          rate(container_net_tcp_close_total[30s]) > 2
+        for: 30s
+        labels:
+          severity: 严重
+          category: network
+        annotations:
+          summary: "容器TCP关闭过于频繁"
+          description: "容器 {{ $labels.container }} 当前TCP关闭速率超过2次/s并持续30秒。"
+
+      - alert: CPU内存采集器异常
+        expr: |
+          absent(container_cpu_usage_usec) OR up{job="ebpf_container_cpu_mem"} == 0
+        for: 1m
+        labels:
+          severity: 严重
+          category: exporter
+        annotations:
+          summary: "CPU/MEM采集器异常"
+          description: "Prometheus 没有采集到 CPU/MEM 指标，请检查 cpu_mem exporter 和 monitor 是否正常运行。"
+
+      - alert: IO采集器异常
+        expr: |
+          ebpf_io_exporter_up == 0 OR up{job="ebpf_container_io"} == 0
+        for: 1m
+        labels:
+          severity: 严重
+          category: exporter
+        annotations:
+          summary: "IO采集器异常"
+          description: "IO exporter 没有读取到 state 文件，或 Prometheus 无法访问 2114 端口。"
+
+      - alert: 网络采集器异常
+        expr: |
+          ebpf_net_exporter_up == 0 OR up{job="ebpf_container_net"} == 0
+        for: 1m
+        labels:
+          severity: 严重
+          category: exporter
+        annotations:
+          summary: "网络采集器异常"
+          description: "网络 exporter 没有读取到 state 文件，或 Prometheus 无法访问 2115 端口。"

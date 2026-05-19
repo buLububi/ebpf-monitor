@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 if [ -d runtime/pids ]; then
-  for f in runtime/pids/io_*.pid; do
+  for f in runtime/pids/net_*.pid; do
     [ -e "$f" ] || continue
     pid="$(cat "$f")"
     if kill -0 "$pid" 2>/dev/null; then
@@ -15,7 +15,6 @@ if [ -d runtime/pids ]; then
   done
 fi
 
-pkill -f io_multi_monitor 2>/dev/null || true
-sudo pkill -f io_multi_monitor 2>/dev/null || true
+pkill -f net_multi_monitor 2>/dev/null || true
 
-echo "[OK] io_multi stopped"
+echo "[OK] net_multi stopped"

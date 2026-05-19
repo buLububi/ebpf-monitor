@@ -2,7 +2,7 @@
   "uid": "ebpf-container-customer-detail",
   "title": "容器性能详情",
   "schemaVersion": 42,
-  "version": 300,
+  "version": 304,
   "refresh": "5s",
   "time": {
     "from": "now-15m",
@@ -247,7 +247,7 @@
     {
       "id": 10,
       "type": "timeseries",
-      "title": "CPU 实时值与动态上限",
+      "title": "CPU 实时值与告警阈值",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -265,8 +265,8 @@
           "refId": "A"
         },
         {
-          "expr": "avg_over_time(rate(container_cpu_usage_usec{container=\"$container\"}[1m])[1h:1m]) + 2 * stddev_over_time(rate(container_cpu_usage_usec{container=\"$container\"}[1m])[1h:1m])",
-          "legendFormat": "动态上限",
+          "expr": "container_cpu_usage_usec{container=\"$container\"} * 0 + 500000",
+          "legendFormat": "告警阈值",
           "refId": "B"
         }
       ],
@@ -322,7 +322,8 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "description": "CPU 告警阈值固定为0.5核，持续30秒触发，适合演示和快速发现高CPU。"
     },
     {
       "id": 11,
@@ -493,7 +494,7 @@
     {
       "id": 13,
       "type": "timeseries",
-      "title": "IO 平均延迟与动态上限",
+      "title": "IO 平均延迟与告警阈值",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -511,8 +512,8 @@
           "refId": "A"
         },
         {
-          "expr": "avg_over_time(container_io_latency_avg_us{container=\"$container\"}[1h]) + 2 * stddev_over_time(container_io_latency_avg_us{container=\"$container\"}[1h])",
-          "legendFormat": "动态上限",
+          "expr": "container_io_latency_avg_us{container=\"$container\"} * 0 + 1000",
+          "legendFormat": "告警阈值",
           "refId": "B"
         }
       ],
@@ -568,12 +569,13 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "description": "IO 平均延迟告警阈值固定为1000us，持续30秒触发。"
     },
     {
       "id": 14,
       "type": "timeseries",
-      "title": "调度最大延迟与动态上限",
+      "title": "调度最大延迟与告警阈值",
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
@@ -591,8 +593,8 @@
           "refId": "A"
         },
         {
-          "expr": "avg_over_time(container_sched_latency_max_us{container=\"$container\"}[1h]) + 2 * stddev_over_time(container_sched_latency_max_us{container=\"$container\"}[1h])",
-          "legendFormat": "动态上限",
+          "expr": "container_sched_latency_max_us{container=\"$container\"} * 0 + 50000",
+          "legendFormat": "告警阈值",
           "refId": "B"
         }
       ],
@@ -648,7 +650,8 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "description": "调度最大延迟告警阈值固定为50000us，持续30秒触发。"
     },
     {
       "id": 15,
@@ -729,6 +732,566 @@
           "sort": "desc"
         }
       }
+    },
+    {
+      "id": 300,
+      "type": "stat",
+      "title": "当前网络发送速率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_net_dev_queue_bytes_total{container=\"$container\"}[1m])) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "这个容器当前每秒发出的数据量。"
+    },
+    {
+      "id": 301,
+      "type": "stat",
+      "title": "当前网络接收速率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 25,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_netif_receive_skb_bytes_total{container=\"$container\"}[1m])) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "这个容器当前每秒收到的数据量。"
+    },
+    {
+      "id": 302,
+      "type": "stat",
+      "title": "TCP 建立速率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_net_tcp_established_total{container=\"$container\"}[1m])) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "这个容器每秒新增 TCP 已建立连接数。"
+    },
+    {
+      "id": 303,
+      "type": "stat",
+      "title": "TCP 关闭速率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 25,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_net_tcp_close_total{container=\"$container\"}[1m])) OR vector(0)",
+          "refId": "A",
+          "legendFormat": "{{container}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "description": "这个容器每秒 TCP 关闭次数。"
+    },
+    {
+      "id": 304,
+      "type": "timeseries",
+      "title": "网络发送 / 接收趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "rate(container_net_dev_queue_bytes_total{container=\"$container\"}[1m])",
+          "legendFormat": "发送",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_netif_receive_skb_bytes_total{container=\"$container\"}[1m])",
+          "legendFormat": "接收",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "看这个容器网络吞吐是否平稳，是否有突增或中断。"
+    },
+    {
+      "id": 305,
+      "type": "timeseries",
+      "title": "网络包数量趋势",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "rate(container_net_dev_queue_total{container=\"$container\"}[1m])",
+          "legendFormat": "发送包",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_netif_receive_skb_total{container=\"$container\"}[1m])",
+          "legendFormat": "接收包",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "看这个容器每秒处理多少网络包，适合判断小包高频访问。"
+    },
+    {
+      "id": 306,
+      "type": "timeseries",
+      "title": "TCP 连接生命周期",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "rate(container_net_tcp_established_total{container=\"$container\"}[1m])",
+          "legendFormat": "连接建立",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_net_tcp_close_total{container=\"$container\"}[1m])",
+          "legendFormat": "连接关闭",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(container_net_inet_sock_set_state_total{container=\"$container\"}[1m])",
+          "legendFormat": "状态变化",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "连接建立和关闭都高，通常表示短连接多；状态变化高说明 TCP 活动频繁。"
+    },
+    {
+      "id": 307,
+      "type": "timeseries",
+      "title": "五个网络挂载点事件计数",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 36,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "container_net_dev_queue_total{container=\"$container\"}",
+          "legendFormat": "net_dev_queue 发送路径",
+          "refId": "A"
+        },
+        {
+          "expr": "container_netif_receive_skb_total{container=\"$container\"}",
+          "legendFormat": "netif_receive_skb 接收路径",
+          "refId": "B"
+        },
+        {
+          "expr": "container_net_inet_sock_set_state_total{container=\"$container\"}",
+          "legendFormat": "inet_sock_set_state 状态变化",
+          "refId": "C"
+        },
+        {
+          "expr": "container_net_tcp_v4_connect_total{container=\"$container\"}",
+          "legendFormat": "tcp_v4_connect 主动连接",
+          "refId": "D"
+        },
+        {
+          "expr": "container_net_tcp_close_total{container=\"$container\"}",
+          "legendFormat": "tcp_close 关闭连接",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "用来确认要求的五个 eBPF 挂载点是否都在产生事件。"
     }
   ]
 }
